@@ -1,15 +1,14 @@
-FROM node:18-alpine
+FROM node:18-bookworm-slim
 
 WORKDIR /app
 
-# Install OpenSSL 1.1 and other required dependencies for Prisma
-RUN apk add --no-cache \
-    openssl1.1-compat \
+# Install required dependencies (Debian-based, includes OpenSSL by default)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     ca-certificates \
     python3 \
-    make \
-    g++
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
