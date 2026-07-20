@@ -1,0 +1,203 @@
+================================================================================
+                    BANCO PERU BACKEND - DEPLOYMENT NOTES
+================================================================================
+
+PROJECT: Backend Banking API
+VERSION: 1.0.0
+LAST UPDATED: 2024
+
+================================================================================
+IMPORTANTE - RAILWAY DEPLOYMENT FIX
+================================================================================
+
+Se ha implementado una solución para el error de OpenSSL en Railway:
+
+ERROR QUE TENIAS:
+  PrismaClientInitializationError: Unable to require(...libquery_engine-linux-musl.so.node)
+  Error loading shared library libssl.so.1.1: No such file or directory
+
+SOLUCIÓN APLICADA:
+  1. Actualizado Dockerfile para instalar openssl1.1-compat
+  2. Actualizado railway.toml con configuración correcta de Prisma
+  3. Actualizado .env.railway con variables correctas
+
+ARCHIVOS MODIFICADOS:
+  ✓ backend/Dockerfile - Added: RUN apk add --no-cache openssl1.1-compat
+  ✓ backend/railway.toml - Added: PRISMA_CLI_BINARY_TARGETS = "native,linux-musl"
+  ✓ backend/.env.railway - Cleaned OpenSSL configuration
+  ✓ backend/backend/Dockerfile - Added OpenSSL 1.1 for local builds
+
+NUEVOS ARCHIVOS AGREGADOS:
+  ✓ RAILWAY_OPENSSL_FIX.md - Documentación detallada
+  ✓ check-openssl.sh - Script bash para diagnosticar
+  ✓ check-openssl.ps1 - Script PowerShell para diagnosticar
+  ✓ .github/workflows/deploy-railway.yml - Workflow de GitHub Actions
+
+================================================================================
+PASOS PARA DESPLEGAR EN RAILWAY
+================================================================================
+
+1. VERIFICAR CONFIGURACIÓN LOCAL:
+   PowerShell:  .\check-openssl.ps1
+   Bash:        bash check-openssl.sh
+
+2. COMMIT Y PUSH:
+   git add .
+   git commit -m "fix: Add OpenSSL 1.1 support for Railway deployment"
+   git push origin main
+
+3. EN RAILWAY DASHBOARD:
+   - Ve a: backend_banco → Settings → Variables
+   - Asegúrate que NODE_ENV=production esté configurado
+   - Configura variables SMTP si necesitas email
+   - Haz click en "Redeploy" o espera push automático
+
+4. VERIFICAR DEPLOYMENT:
+   - Railway Logs → Busca mensajes de Prisma
+   - Verifica que no aparezca error de libssl.so.1.1
+   - Confirma que la app escucha en puerto 3000
+
+================================================================================
+CONFIGURACIÓN DE VARIABLES EN RAILWAY
+================================================================================
+
+Requeridas:
+  NODE_ENV=production
+  DATABASE_URL=postgresql://... (automática si usas Railway DB)
+
+Opcionales (para Email):
+  SMTP_HOST=smtp.gmail.com
+  SMTP_PORT=587
+  SMTP_SECURE=false
+  SMTP_USER=tu_email@gmail.com
+  SMTP_PASSWORD=tu_app_password
+  SMTP_FROM_EMAIL=noreply@bancoperu.com
+  FRONTEND_URL=https://fronted-banco.vercel.app
+
+================================================================================
+DOCKER BUILD LOCAL
+================================================================================
+
+Para probar el build localmente:
+  docker build -f Dockerfile -t banco-peru-backend:test .
+
+Para ejecutar localmente:
+  docker run -p 3000:3000 --env-file .env.railway banco-peru-backend:test
+
+================================================================================
+DESARROLLO LOCAL
+================================================================================
+
+Setup inicial:
+  npm install
+  npm run prisma:generate
+  npm run build
+  npm run start:dev
+
+Scripts disponibles:
+  npm run build           - Compilar TypeScript
+  npm run start          - Iniciar en modo producción
+  npm run start:dev      - Iniciar con watch mode
+  npm run prisma:generate - Generar cliente de Prisma
+  npm run prisma:push    - Sincronizar BD con schema
+  npm test               - Ejecutar tests
+  npm run lint           - Ejecutar ESLint
+
+================================================================================
+ESTRUCTURA DE CARPETAS
+================================================================================
+
+backend/
+├── src/
+│   ├── auth/          - Autenticación y JWT
+│   ├── users/         - Gestión de usuarios
+│   ├── accounts/      - Cuentas bancarias
+│   ├── transactions/  - Transacciones
+│   ├── transfers/     - Transferencias
+│   ├── withdrawals/   - Retiros
+│   ├── email/         - Servicio de email (NUEVO)
+│   ├── prisma/        - Configuración Prisma
+│   ├── common/        - Guards, decorators
+│   └── app.module.ts  - Módulo principal
+├── prisma/
+│   └── schema.prisma  - Esquema de BD
+├── Dockerfile         - Para Railway
+├── railway.toml       - Configuración Railway
+├── .env.railway       - Variables Railway
+└── package.json
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+PROBLEMA: Railway sigue fallando con libssl.so.1.1
+SOLUCIÓN:
+  1. Clear cache en Railway: Settings → Triggers → Clear build cache
+  2. Trigger new deploy
+  3. Si persiste, usar node:18-slim en lugar de alpine
+
+PROBLEMA: Prisma no genera correctamente
+SOLUCIÓN:
+  npm run prisma:generate
+  npm run prisma:push (para sincronizar BD)
+
+PROBLEMA: Build falla localmente
+SOLUCIÓN:
+  npm ci (en lugar de npm install)
+  npm run prisma:generate
+  npm run build
+
+PROBLEMA: Conexión a BD en Railway
+SOLUCIÓN:
+  - Verifica que DATABASE_URL esté configurada en Railway
+  - Confirma que Railway Database está en el proyecto
+  - Check logs para ver detalles de conexión
+
+================================================================================
+EMAIL SERVICE (NUEVO)
+================================================================================
+
+Se ha agregado servicio de email con Nodemailer:
+
+Archivos:
+  src/email/email.module.ts       - Módulo NestJS
+  src/email/email.service.ts      - Servicio de email
+
+Métodos disponibles:
+  sendWelcomeEmail()              - Email de bienvenida para usuarios
+  sendAccountCreatedNotification() - Notificación a admin
+
+Configuración requerida en .env:
+  SMTP_HOST=smtp.gmail.com
+  SMTP_PORT=587
+  SMTP_SECURE=false
+  SMTP_USER=tu_email@gmail.com
+  SMTP_PASSWORD=tu_app_password (generar en Google Account)
+  SMTP_FROM_EMAIL=noreply@bancoperu.com
+
+================================================================================
+INTEGRACIONES PLANEADAS
+================================================================================
+
+Próximas mejoras para el servicio de email:
+  - Integration con TransactionsService para confirmación de transacciones
+  - Integration con WithdrawalsService para confirmación de retiros
+  - Retry automático con exponential backoff
+  - Template engine mejorado (Handlebars)
+  - Rate limiting
+  - Email logging en BD
+
+================================================================================
+REFERENCIAS
+================================================================================
+
+Documentación:
+  - Prisma: https://www.prisma.io
+  - Railway: https://docs.railway.app
+  - NestJS: https://docs.nestjs.com
+  - Nodemailer: https://nodemailer.com
+
+Problemas comunes:
+  - Ver: RAILWAY_OPENSSL_FIX.md
+
+================================================================================

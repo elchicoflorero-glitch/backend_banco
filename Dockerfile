@@ -1,8 +1,8 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:18-alpine3.18 AS builder
 
-# Install OpenSSL and build dependencies
-RUN apk add --no-cache openssl openssl-dev python3 make g++ libc-dev
+# Install build dependencies including OpenSSL 1.1
+RUN apk add --no-cache python3 make g++ libc-dev openssl1.1-compat
 
 WORKDIR /app
 
@@ -22,12 +22,12 @@ RUN npm run prisma:generate
 RUN npm run build
 
 # Runtime stage
-FROM node:18-alpine
-
-# Install OpenSSL runtime libraries
-RUN apk add --no-cache openssl
+FROM node:18-alpine3.18
 
 WORKDIR /app
+
+# Install OpenSSL 1.1 for Prisma runtime
+RUN apk add --no-cache openssl1.1-compat
 
 # Copy package files
 COPY backend/package*.json ./

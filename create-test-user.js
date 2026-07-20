@@ -22,7 +22,7 @@ async function createTestUser() {
       INSERT INTO users (username, email, password, role, "createdAt", "updatedAt")
       VALUES ($1, $2, $3, $4, NOW(), NOW())
       ON CONFLICT (username) DO UPDATE 
-      SET password = $3, email = $2, role = $4
+      SET password = EXCLUDED.password, email = EXCLUDED.email, role = EXCLUDED.role, "updatedAt" = NOW()
       RETURNING id, username, email, role;
     `;
     
