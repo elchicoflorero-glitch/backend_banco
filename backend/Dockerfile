@@ -7,16 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
-COPY prisma ./prisma/
-
-RUN npm ci --ignore-scripts
-
 COPY . .
 
-RUN npm run build
-
-RUN npm prune --production
+RUN npm ci --ignore-scripts --production
 
 EXPOSE 3000
 
