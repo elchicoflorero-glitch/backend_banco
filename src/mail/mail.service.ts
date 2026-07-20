@@ -14,7 +14,8 @@ export class MailService {
     const isEnabled = process.env.SMTP_USER && process.env.SMTP_PASSWORD;
     
     if (!isEnabled) {
-      this.logger.warn('📧 Email service is disabled: SMTP credentials not configured');
+      this.logger.warn('⚠️  Email service is DISABLED: SMTP credentials not configured');
+      this.logger.warn('Set SMTP_USER and SMTP_PASSWORD to enable email');
       return;
     }
 
@@ -28,15 +29,21 @@ export class MailService {
       },
     };
 
+    this.logger.log(`📧 Initializing Email Service:`);
+    this.logger.log(`   Host: ${smtpConfig.host}`);
+    this.logger.log(`   Port: ${smtpConfig.port}`);
+    this.logger.log(`   Secure: ${smtpConfig.secure}`);
+    this.logger.log(`   User: ${smtpConfig.auth.user}`);
+
     this.transporter = nodemailer.createTransport(smtpConfig);
-    this.logger.log('✅ Email service initialized');
 
     // Verify connection
     this.transporter.verify((error, success) => {
       if (error) {
-        this.logger.error('❌ Email service connection failed:', error);
+        this.logger.error('❌ Email service connection FAILED:', error.message);
+        this.logger.error('Stack:', error.stack);
       } else {
-        this.logger.log('✅ Email service is ready to send messages');
+        this.logger.log('✅ Email service is ready - SMTP connection verified');
       }
     });
   }
@@ -48,8 +55,8 @@ export class MailService {
     frontendUrl?: string,
   ): Promise<void> {
     if (!this.transporter) {
-      this.logger.warn(`📧 [SKIPPED] Email service disabled - would send to ${email}`);
-      throw new Error('Email service not configured (SMTP credentials missing)');
+      this.logger.warn(`📧 [DISABLED] Email service is disabled - would send to ${email}`);
+      return;
     }
 
     try {
@@ -71,8 +78,8 @@ export class MailService {
       
       this.logger.log(`✅ Client created email sent successfully to ${email} (ID: ${info.messageId})`);
     } catch (error) {
-      this.logger.error(`❌ Failed to send client created email to ${email}:`, error.message, error.stack);
-      throw error;
+      this.logger.error(`❌ Failed to send client created email to ${email}:`, error.message);
+      // Don't throw - email is optional, client creation should succeed
     }
   }
 
