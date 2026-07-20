@@ -42,16 +42,18 @@ export class ClientsService {
       details: { dni: client.dni, name: `${client.firstName} ${client.lastName}` },
     });
 
-    // Send client created email (fire-and-forget pattern)
-    this.mailService
-      .sendClientCreatedEmail(
+    // Send client created email
+    try {
+      await this.mailService.sendClientCreatedEmail(
         client.email,
         `${client.firstName} ${client.lastName}`,
-        createClientDto.password, // Send plaintext password only in the creation email
-      )
-      .catch((err) => {
-        console.error('Error sending client created email:', err.message);
-      });
+        createClientDto.password,
+      );
+      console.log(`✅ Welcome email sent successfully to ${client.email}`);
+    } catch (emailError) {
+      // Log but don't fail - client was created successfully
+      console.error(`❌ Failed to send welcome email to ${client.email}:`, emailError.message);
+    }
 
     return client;
   }

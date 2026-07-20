@@ -48,24 +48,30 @@ export class MailService {
     frontendUrl?: string,
   ): Promise<void> {
     if (!this.transporter) {
-      this.logger.warn(`[SKIPPED] Email service disabled - would send to ${email}`);
-      return;
+      this.logger.warn(`📧 [SKIPPED] Email service disabled - would send to ${email}`);
+      throw new Error('Email service not configured (SMTP credentials missing)');
     }
 
     try {
+      this.logger.log(`📧 Preparing welcome email for ${clientName} (${email})`);
+      
       const frontend = frontendUrl || process.env.FRONTEND_URL || 'https://fronted-banco.vercel.app';
       const htmlContent = this.generateClientCreatedTemplate(clientName, email, password, frontend);
 
-      await this.transporter.sendMail({
+      const mailOptions = {
         from: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER,
         to: email,
         subject: '¡Bienvenido a BancoPeru! Tu cuenta ha sido creada 🎉',
         html: htmlContent,
-      });
+      };
 
-      this.logger.log(`✅ Client created email sent to ${email}`);
+      this.logger.log(`📧 Sending email from ${mailOptions.from} to ${email}`);
+      
+      const info = await this.transporter.sendMail(mailOptions);
+      
+      this.logger.log(`✅ Client created email sent successfully to ${email} (ID: ${info.messageId})`);
     } catch (error) {
-      this.logger.error(`❌ Failed to send client created email to ${email}:`, error.message);
+      this.logger.error(`❌ Failed to send client created email to ${email}:`, error.message, error.stack);
       throw error;
     }
   }
