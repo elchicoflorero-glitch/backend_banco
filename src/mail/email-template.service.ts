@@ -292,6 +292,170 @@ export class EmailTemplateService {
   }
 
   /**
+   * Renderiza plantilla de email para cliente creado por admin
+   */
+  renderClientCreatedEmail(
+    clientName: string,
+    email: string,
+    password: string,
+    frontendUrl: string,
+  ): string {
+    const escapedClientName = this.escapeHtml(clientName);
+    const escapedEmail = this.escapeHtml(email);
+    const escapedPassword = this.escapeHtml(password);
+    const escapedUrl = this.escapeHtml(frontendUrl);
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              background-color: #f5f5f5;
+              margin: 0;
+              padding: 0;
+            }
+            .container {
+              max-width: 600px;
+              margin: 20px auto;
+              background-color: #ffffff;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+              overflow: hidden;
+            }
+            .header {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 30px;
+              text-align: center;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 28px;
+            }
+            .content {
+              padding: 30px;
+              color: #333;
+            }
+            .content h2 {
+              color: #667eea;
+              margin-top: 0;
+            }
+            .content p {
+              line-height: 1.6;
+              margin: 15px 0;
+            }
+            .credentials-box {
+              background-color: #f9f9f9;
+              border-left: 4px solid #667eea;
+              padding: 20px;
+              margin: 20px 0;
+              border-radius: 4px;
+              font-family: 'Courier New', monospace;
+            }
+            .credential-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 10px 0;
+              border-bottom: 1px solid #e0e0e0;
+            }
+            .credential-row:last-child {
+              border-bottom: none;
+            }
+            .credential-label {
+              font-weight: bold;
+              color: #667eea;
+            }
+            .credential-value {
+              color: #333;
+              word-break: break-all;
+            }
+            .cta-button {
+              display: inline-block;
+              background-color: #667eea;
+              color: white;
+              padding: 12px 30px;
+              border-radius: 4px;
+              text-decoration: none;
+              margin: 20px 0;
+              font-weight: bold;
+            }
+            .cta-button:hover {
+              background-color: #764ba2;
+            }
+            .security-note {
+              background-color: #fff3cd;
+              border: 1px solid #ffeeba;
+              padding: 12px;
+              border-radius: 4px;
+              margin: 15px 0;
+              font-size: 13px;
+              color: #856404;
+            }
+            .footer {
+              background-color: #f5f5f5;
+              padding: 20px;
+              text-align: center;
+              font-size: 12px;
+              color: #999;
+              border-top: 1px solid #e0e0e0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>¡Bienvenido a BancoPeru!</h1>
+            </div>
+            <div class="content">
+              <h2>Hola ${escapedClientName},</h2>
+              <p>
+                Tu cuenta ha sido creada exitosamente en BancoPeru por uno de nuestros administradores.
+                A continuación, encontrarás tus credenciales de acceso:
+              </p>
+              <div class="credentials-box">
+                <div class="credential-row">
+                  <span class="credential-label">Email:</span>
+                  <span class="credential-value">${escapedEmail}</span>
+                </div>
+                <div class="credential-row">
+                  <span class="credential-label">Contraseña:</span>
+                  <span class="credential-value">${escapedPassword}</span>
+                </div>
+              </div>
+              <div class="security-note">
+                <strong>⚠️ Importante:</strong> Por tu seguridad, te recomendamos cambiar tu contraseña 
+                en tu primer acceso. Guarda tus credenciales en un lugar seguro y nunca las compartas con nadie.
+              </div>
+              <p style="text-align: center;">
+                <a href="${escapedUrl}" class="cta-button">Acceder a BancoPeru</a>
+              </p>
+              <p>
+                Con tu cuenta podrás:
+              </p>
+              <ul>
+                <li>Consultar saldos e historial de transacciones</li>
+                <li>Realizar transferencias seguras</li>
+                <li>Pagar servicios</li>
+                <li>Retirar dinero en cajeros automáticos</li>
+              </ul>
+              <p>
+                Si tienes alguna pregunta o necesitas ayuda, contáctanos a través del portal de soporte.
+              </p>
+            </div>
+            <div class="footer">
+              <p>© 2026 BancoPeru. Todos los derechos reservados.</p>
+              <p>Este es un correo automático, por favor no responder.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  /**
    * Escapa caracteres HTML para prevenir XSS
    */
   private escapeHtml(text: string): string {

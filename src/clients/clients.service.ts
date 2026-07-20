@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException, BadRequestException }
 import { hash } from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { MailService } from '../mail/mail.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 
@@ -10,6 +11,7 @@ export class ClientsService {
   constructor(
     private prisma: PrismaService,
     private auditLogService: AuditLogService,
+    private mailService: MailService,
   ) {}
 
   async create(createClientDto: CreateClientDto, userId: string) {
@@ -39,6 +41,17 @@ export class ClientsService {
       entityId: client.id,
       details: { dni: client.dni, name: `${client.firstName} ${client.lastName}` },
     });
+
+    // Send client created email (fire-and-forget pattern)
+    this.mailService
+      .sendClientCreatedEmail(
+        client.email,
+        `${client.firstName} ${client.lastName}`,
+        createClientDto.password, // Send plaintext password only in the creation email
+      )
+      .catch((err) => {
+        console.error('Error sending client created email:', err.message);
+      });
 
     return client;
   }

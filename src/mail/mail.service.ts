@@ -44,6 +44,47 @@ export class MailService {
   }
 
   /**
+   * Envía email de creación de cliente cuando admin crea un cliente
+   */
+  async sendClientCreatedEmail(
+    email: string,
+    clientName: string,
+    password: string,
+    frontendUrl?: string,
+  ): Promise<void> {
+    if (!this.validateEmail(email)) {
+      throw new BadRequestException('Invalid email address');
+    }
+
+    try {
+      const url = frontendUrl || this.configService.get<string>('FRONTEND_URL');
+      const html = this.emailTemplateService.renderClientCreatedEmail(
+        clientName,
+        email,
+        password,
+        url,
+      );
+
+      await this.retryEmailWithBackoff(
+        {
+          to: email,
+          subject: 'Tu cuenta en BancoPeru ha sido creada',
+          html,
+        },
+        3,
+        5000,
+      );
+
+      this.logger.log(`Client created email sent to ${email}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send client created email to ${email}: ${error.message}`,
+      );
+      // Fire-and-forget: no lanzar error para no bloquear creación del cliente
+    }
+  }
+
+  /**
    * Envía email de bienvenida al crear usuario
    */
   async sendWelcomeEmail(
