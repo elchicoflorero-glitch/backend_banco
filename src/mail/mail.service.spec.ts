@@ -45,9 +45,18 @@ describe('MailService', () => {
           provide: EmailTemplateService,
           useValue: {
             renderWelcomeEmail: jest.fn().mockReturnValue('<h1>Welcome</h1>'),
+            renderClientCreatedEmail: jest
+              .fn()
+              .mockReturnValue('<h1>Client Created</h1>'),
             renderTransactionEmail: jest
               .fn()
               .mockReturnValue('<h1>Transaction</h1>'),
+            renderTransferEmailSender: jest
+              .fn()
+              .mockReturnValue('<h1>Transfer Sent</h1>'),
+            renderTransferEmailRecipient: jest
+              .fn()
+              .mockReturnValue('<h1>Transfer Received</h1>'),
           },
         },
       ],
@@ -99,6 +108,110 @@ describe('MailService', () => {
     });
   });
 
+  describe('sendDepositEmail', () => {
+    it('should send deposit confirmation email', async () => {
+      const recipientEmail = 'client@example.com';
+      const clientName = 'John Doe';
+      const transaction = {
+        amount: 1000,
+        type: 'deposit',
+        createdAt: new Date(),
+      };
+      const accountNumber = '****6789';
+
+      await service.sendDepositEmail(
+        recipientEmail,
+        clientName,
+        transaction,
+        accountNumber,
+      );
+
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: recipientEmail,
+          subject: 'Confirmación de Depósito - BancoPeru',
+        }),
+      );
+    });
+
+    it('should throw BadRequestException with invalid email', async () => {
+      const invalidEmail = 'invalid-email';
+      const transaction = { amount: 1000 };
+
+      await expect(
+        service.sendDepositEmail(
+          invalidEmail,
+          'John Doe',
+          transaction,
+          '****6789',
+        ),
+      ).rejects.toThrow('Invalid email address');
+    });
+  });
+
+  describe('sendWithdrawalEmail', () => {
+    it('should send withdrawal confirmation email', async () => {
+      const recipientEmail = 'client@example.com';
+      const clientName = 'John Doe';
+      const transaction = {
+        amount: 500,
+        type: 'withdrawal',
+        createdAt: new Date(),
+      };
+      const accountNumber = '****6789';
+
+      await service.sendWithdrawalEmail(
+        recipientEmail,
+        clientName,
+        transaction,
+        accountNumber,
+      );
+
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: recipientEmail,
+          subject: 'Confirmación de Retiro - BancoPeru',
+        }),
+      );
+    });
+  });
+
+  describe('sendTransferEmail', () => {
+    it('should send transfer emails to both sender and recipient', async () => {
+      const senderEmail = 'sender@example.com';
+      const recipientEmail = 'recipient@example.com';
+      const transaction = {
+        amount: 2000,
+        type: 'transfer',
+        createdAt: new Date(),
+      };
+
+      await service.sendTransferEmail(
+        senderEmail,
+        'John Doe',
+        recipientEmail,
+        'Jane Smith',
+        transaction,
+        '****1234',
+        '****5678',
+      );
+
+      expect(mockSendMail).toHaveBeenCalledTimes(2);
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: senderEmail,
+          subject: 'Confirmación de Transferencia Enviada - BancoPeru',
+        }),
+      );
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: recipientEmail,
+          subject: 'Confirmación de Transferencia Recibida - BancoPeru',
+        }),
+      );
+    });
+  });
+
   describe('sendTransactionEmail', () => {
     it('should send transaction confirmation email', async () => {
       const recipientEmail = 'client@example.com';
@@ -110,7 +223,7 @@ describe('MailService', () => {
       };
       const accountNumber = '123456789';
 
-      await service.sendTransactionEmail(
+      await service.sendDepositEmail(
         recipientEmail,
         clientName,
         transaction,
@@ -120,7 +233,7 @@ describe('MailService', () => {
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           to: recipientEmail,
-          subject: 'Confirmación de Transacción - BancoPeru!',
+          subject: 'Confirmación de Depósito - BancoPeru',
         }),
       );
     });
@@ -130,7 +243,7 @@ describe('MailService', () => {
       const transaction = { amount: 1000 };
 
       await expect(
-        service.sendTransactionEmail(
+        service.sendDepositEmail(
           invalidEmail,
           'John Doe',
           transaction,

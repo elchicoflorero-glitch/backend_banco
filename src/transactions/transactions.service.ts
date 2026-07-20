@@ -172,14 +172,14 @@ export class TransactionsService {
 
     // Send transaction confirmation email (fire-and-forget pattern)
     this.mailService
-      .sendTransactionEmail(
+      .sendDepositEmail(
         account.client.email,
         `${account.client.firstName} ${account.client.lastName}`,
         transaction,
         account.accountNumber,
       )
       .catch((err) => {
-        console.error('Error sending transaction email:', err.message);
+        console.error('Error sending deposit email:', err.message);
       });
 
     return transaction;

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { MailService } from '../mail/mail.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -10,6 +11,7 @@ export class WithdrawalsService {
   constructor(
     private prisma: PrismaService,
     private auditLogService: AuditLogService,
+    private mailService: MailService,
     private accountsService: AccountsService,
   ) {}
 
@@ -88,6 +90,18 @@ export class WithdrawalsService {
       // Log error but don't throw - the withdrawal already succeeded
       console.error('Error creating audit log:', err);
     }
+
+    // Send withdrawal confirmation email (fire-and-forget pattern)
+    this.mailService
+      .sendWithdrawalEmail(
+        result.account.client.email,
+        `${result.account.client.firstName} ${result.account.client.lastName}`,
+        result.transaction,
+        result.account.accountNumber,
+      )
+      .catch((err) => {
+        console.error('Error sending withdrawal email:', err.message);
+      });
 
     return {
       message: 'Withdrawal completed successfully',

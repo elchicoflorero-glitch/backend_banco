@@ -120,9 +120,9 @@ export class MailService {
   }
 
   /**
-   * Envía email de confirmación de transacción
+   * Envía email de confirmación de depósito
    */
-  async sendTransactionEmail(
+  async sendDepositEmail(
     recipientEmail: string,
     clientName: string,
     transaction: any,
@@ -143,24 +143,149 @@ export class MailService {
         formattedAmount,
         'PEN',
         transaction.createdAt?.toISOString() || new Date().toISOString(),
-        transaction.type || 'deposit',
+        'deposit',
         accountNumber,
       );
 
       await this.retryEmailWithBackoff(
         {
           to: recipientEmail,
-          subject: 'Confirmación de Transacción - BancoPeru',
+          subject: 'Confirmación de Depósito - BancoPeru',
           html,
         },
         3,
         5000,
       );
 
-      this.logger.log(`Transaction email sent to ${recipientEmail}`);
+      this.logger.log(`Deposit email sent to ${recipientEmail}`);
     } catch (error) {
       this.logger.error(
-        `Failed to send transaction email to ${recipientEmail}: ${error.message}`,
+        `Failed to send deposit email to ${recipientEmail}: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Envía email de confirmación de retiro
+   */
+  async sendWithdrawalEmail(
+    recipientEmail: string,
+    clientName: string,
+    transaction: any,
+    accountNumber: string,
+  ): Promise<void> {
+    if (!this.validateEmail(recipientEmail)) {
+      throw new BadRequestException('Invalid email address');
+    }
+
+    try {
+      const formattedAmount = new Intl.NumberFormat('es-PE', {
+        style: 'currency',
+        currency: 'PEN',
+      }).format(transaction.amount);
+
+      const html = this.emailTemplateService.renderTransactionEmail(
+        clientName,
+        formattedAmount,
+        'PEN',
+        transaction.createdAt?.toISOString() || new Date().toISOString(),
+        'withdrawal',
+        accountNumber,
+      );
+
+      await this.retryEmailWithBackoff(
+        {
+          to: recipientEmail,
+          subject: 'Confirmación de Retiro - BancoPeru',
+          html,
+        },
+        3,
+        5000,
+      );
+
+      this.logger.log(`Withdrawal email sent to ${recipientEmail}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send withdrawal email to ${recipientEmail}: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Envía email de confirmación de transferencia
+   */
+  async sendTransferEmail(
+    senderEmail: string,
+    senderName: string,
+    recipientEmail: string,
+    recipientName: string,
+    transaction: any,
+    senderAccountNumber: string,
+    recipientAccountNumber: string,
+  ): Promise<void> {
+    if (!this.validateEmail(senderEmail)) {
+      throw new BadRequestException('Invalid sender email address');
+    }
+    if (!this.validateEmail(recipientEmail)) {
+      throw new BadRequestException('Invalid recipient email address');
+    }
+
+    try {
+      const formattedAmount = new Intl.NumberFormat('es-PE', {
+        style: 'currency',
+        currency: 'PEN',
+      }).format(transaction.amount);
+
+      // Email para el remitente
+      const senderHtml = this.emailTemplateService.renderTransferEmailSender(
+        senderName,
+        formattedAmount,
+        'PEN',
+        transaction.createdAt?.toISOString() || new Date().toISOString(),
+        recipientName,
+        senderAccountNumber,
+        recipientAccountNumber,
+      );
+
+      // Email para el destinatario
+      const recipientHtml = this.emailTemplateService.renderTransferEmailRecipient(
+        recipientName,
+        formattedAmount,
+        'PEN',
+        transaction.createdAt?.toISOString() || new Date().toISOString(),
+        senderName,
+        senderAccountNumber,
+        recipientAccountNumber,
+      );
+
+      // Enviar a ambos (paralelo)
+      await Promise.all([
+        this.retryEmailWithBackoff(
+          {
+            to: senderEmail,
+            subject: 'Confirmación de Transferencia Enviada - BancoPeru',
+            html: senderHtml,
+          },
+          3,
+          5000,
+        ),
+        this.retryEmailWithBackoff(
+          {
+            to: recipientEmail,
+            subject: 'Confirmación de Transferencia Recibida - BancoPeru',
+            html: recipientHtml,
+          },
+          3,
+          5000,
+        ),
+      ]);
+
+      this.logger.log(
+        `Transfer emails sent to ${senderEmail} and ${recipientEmail}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send transfer emails: ${error.message}`,
       );
     }
   }

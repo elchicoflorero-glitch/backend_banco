@@ -456,8 +456,298 @@ export class EmailTemplateService {
   }
 
   /**
-   * Escapa caracteres HTML para prevenir XSS
+   * Renderiza plantilla de email de transferencia para el remitente
    */
+  renderTransferEmailSender(
+    senderName: string,
+    amount: string,
+    currency: string,
+    timestamp: string,
+    recipientName: string,
+    senderAccountNumber: string,
+    recipientAccountNumber: string,
+  ): string {
+    const escapedSenderName = this.escapeHtml(senderName);
+    const escapedRecipientName = this.escapeHtml(recipientName);
+    const escapedAmount = this.escapeHtml(amount);
+    const senderLastFour = this.escapeHtml(senderAccountNumber.slice(-4));
+    const recipientLastFour = this.escapeHtml(recipientAccountNumber.slice(-4));
+
+    const date = new Date(timestamp);
+    const formattedDate = date.toLocaleDateString('es-PE', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              background-color: #f5f5f5;
+              margin: 0;
+              padding: 0;
+            }
+            .container {
+              max-width: 600px;
+              margin: 20px auto;
+              background-color: #ffffff;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+              overflow: hidden;
+            }
+            .header {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 30px;
+              text-align: center;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+            }
+            .content {
+              padding: 30px;
+              color: #333;
+            }
+            .transaction-box {
+              background-color: #f9f9f9;
+              border-left: 4px solid #667eea;
+              padding: 20px;
+              margin: 20px 0;
+              border-radius: 4px;
+            }
+            .transaction-detail {
+              display: flex;
+              justify-content: space-between;
+              padding: 10px 0;
+              border-bottom: 1px solid #e0e0e0;
+            }
+            .transaction-detail:last-child {
+              border-bottom: none;
+            }
+            .transaction-detail .label {
+              font-weight: bold;
+              color: #667eea;
+            }
+            .transaction-detail .value {
+              color: #333;
+              word-break: break-all;
+            }
+            .amount-highlight {
+              font-size: 24px;
+              font-weight: bold;
+              color: #e74c3c;
+              margin: 15px 0;
+            }
+            .footer {
+              background-color: #f5f5f5;
+              padding: 20px;
+              text-align: center;
+              font-size: 12px;
+              color: #999;
+              border-top: 1px solid #e0e0e0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Transferencia Enviada</h1>
+            </div>
+            <div class="content">
+              <p>Hola ${escapedSenderName},</p>
+              <p>
+                Has enviado exitosamente una transferencia bancaria.
+              </p>
+              <div class="transaction-box">
+                <div class="transaction-detail">
+                  <span class="label">Monto Transferido:</span>
+                  <span class="value amount-highlight">${escapedAmount}</span>
+                </div>
+                <div class="transaction-detail">
+                  <span class="label">Destinatario:</span>
+                  <span class="value">${escapedRecipientName}</span>
+                </div>
+                <div class="transaction-detail">
+                  <span class="label">Tu Cuenta:</span>
+                  <span class="value">****${senderLastFour}</span>
+                </div>
+                <div class="transaction-detail">
+                  <span class="label">Cuenta Destino:</span>
+                  <span class="value">****${recipientLastFour}</span>
+                </div>
+                <div class="transaction-detail">
+                  <span class="label">Fecha y Hora:</span>
+                  <span class="value">${formattedDate}</span>
+                </div>
+              </div>
+              <p>
+                La transferencia ha sido procesada correctamente. El destinatario recibirá el dinero en su cuenta.
+              </p>
+            </div>
+            <div class="footer">
+              <p>© 2026 BancoPeru. Todos los derechos reservados.</p>
+              <p>Este es un correo automático, por favor no responder.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Renderiza plantilla de email de transferencia para el destinatario
+   */
+  renderTransferEmailRecipient(
+    recipientName: string,
+    amount: string,
+    currency: string,
+    timestamp: string,
+    senderName: string,
+    senderAccountNumber: string,
+    recipientAccountNumber: string,
+  ): string {
+    const escapedRecipientName = this.escapeHtml(recipientName);
+    const escapedSenderName = this.escapeHtml(senderName);
+    const escapedAmount = this.escapeHtml(amount);
+    const senderLastFour = this.escapeHtml(senderAccountNumber.slice(-4));
+    const recipientLastFour = this.escapeHtml(recipientAccountNumber.slice(-4));
+
+    const date = new Date(timestamp);
+    const formattedDate = date.toLocaleDateString('es-PE', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              background-color: #f5f5f5;
+              margin: 0;
+              padding: 0;
+            }
+            .container {
+              max-width: 600px;
+              margin: 20px auto;
+              background-color: #ffffff;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+              overflow: hidden;
+            }
+            .header {
+              background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+              color: white;
+              padding: 30px;
+              text-align: center;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+            }
+            .content {
+              padding: 30px;
+              color: #333;
+            }
+            .transaction-box {
+              background-color: #f0fff4;
+              border-left: 4px solid #27ae60;
+              padding: 20px;
+              margin: 20px 0;
+              border-radius: 4px;
+            }
+            .transaction-detail {
+              display: flex;
+              justify-content: space-between;
+              padding: 10px 0;
+              border-bottom: 1px solid #e0e0e0;
+            }
+            .transaction-detail:last-child {
+              border-bottom: none;
+            }
+            .transaction-detail .label {
+              font-weight: bold;
+              color: #27ae60;
+            }
+            .transaction-detail .value {
+              color: #333;
+              word-break: break-all;
+            }
+            .amount-highlight {
+              font-size: 24px;
+              font-weight: bold;
+              color: #27ae60;
+              margin: 15px 0;
+            }
+            .footer {
+              background-color: #f5f5f5;
+              padding: 20px;
+              text-align: center;
+              font-size: 12px;
+              color: #999;
+              border-top: 1px solid #e0e0e0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Transferencia Recibida</h1>
+            </div>
+            <div class="content">
+              <p>Hola ${escapedRecipientName},</p>
+              <p>
+                ¡Excelente noticias! Has recibido una transferencia bancaria.
+              </p>
+              <div class="transaction-box">
+                <div class="transaction-detail">
+                  <span class="label">Monto Recibido:</span>
+                  <span class="value amount-highlight">${escapedAmount}</span>
+                </div>
+                <div class="transaction-detail">
+                  <span class="label">Remitente:</span>
+                  <span class="value">${escapedSenderName}</span>
+                </div>
+                <div class="transaction-detail">
+                  <span class="label">Cuenta Origen:</span>
+                  <span class="value">****${senderLastFour}</span>
+                </div>
+                <div class="transaction-detail">
+                  <span class="label">Tu Cuenta:</span>
+                  <span class="value">****${recipientLastFour}</span>
+                </div>
+                <div class="transaction-detail">
+                  <span class="label">Fecha y Hora:</span>
+                  <span class="value">${formattedDate}</span>
+                </div>
+              </div>
+              <p>
+                El dinero ya está disponible en tu cuenta. Puedes consultarlo en cualquier momento desde tu portal de BancoPeru.
+              </p>
+            </div>
+            <div class="footer">
+              <p>© 2026 BancoPeru. Todos los derechos reservados.</p>
+              <p>Este es un correo automático, por favor no responder.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  }
   private escapeHtml(text: string): string {
     if (!text) return '';
     return text

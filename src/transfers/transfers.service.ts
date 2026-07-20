@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { MailService } from '../mail/mail.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -10,6 +11,7 @@ export class TransfersService {
   constructor(
     private prisma: PrismaService,
     private auditLogService: AuditLogService,
+    private mailService: MailService,
     private accountsService: AccountsService,
   ) {}
 
@@ -99,6 +101,21 @@ export class TransfersService {
       // Log error but don't throw - the transfer already succeeded
       console.error('Error creating audit log:', err);
     }
+
+    // Send transfer confirmation emails to both parties (fire-and-forget pattern)
+    this.mailService
+      .sendTransferEmail(
+        result.sourceAccount.client.email,
+        `${result.sourceAccount.client.firstName} ${result.sourceAccount.client.lastName}`,
+        result.destinationAccount.client.email,
+        `${result.destinationAccount.client.firstName} ${result.destinationAccount.client.lastName}`,
+        result.transaction,
+        result.sourceAccount.accountNumber,
+        result.destinationAccount.accountNumber,
+      )
+      .catch((err) => {
+        console.error('Error sending transfer emails:', err.message);
+      });
 
     return {
       message: 'Transfer completed successfully',
