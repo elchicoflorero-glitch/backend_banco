@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcryptjs';
 import { UsersService } from '../users/users.service';
 import { ClientsService } from '../clients/clients.service';
+import { EmailService } from '../email/email.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -12,12 +13,28 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private clientsService: ClientsService,
+    private emailService: EmailService,
     private jwtService: JwtService,
     private prisma: PrismaService,
   ) {}
 
   async register(registerDto: RegisterDto) {
+    // Crear el usuario
     const user = await this.usersService.create(registerDto);
+    
+    // Enviar email de bienvenida con credenciales
+    try {
+      await this.emailService.sendWelcomeEmail(
+        user.email,
+        user.username,
+        registerDto.password, // La contraseña en texto plano viene del DTO
+        user.email, // Usar email como nombre completo si no hay más info
+      );
+    } catch (emailError) {
+      console.log('⚠️ Failed to send welcome email:', emailError.message);
+      // No lanzar error aquí, el usuario fue creado exitosamente
+    }
+
     const { password, ...result } = user;
     return result;
   }

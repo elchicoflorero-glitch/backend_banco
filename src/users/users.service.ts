@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { MailService } from '../mail/mail.service';
 import { hash } from 'bcryptjs';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -16,6 +17,7 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private auditLogService: AuditLogService,
+    private mailService: MailService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -62,6 +64,11 @@ export class UsersService {
         role: user.role,
         action: 'User account created',
       },
+    });
+
+    // Send welcome email (fire-and-forget pattern)
+    this.mailService.sendWelcomeEmail(user.email, user.username).catch((err) => {
+      console.error(`Failed to send welcome email: ${err.message}`);
     });
 
     return user;

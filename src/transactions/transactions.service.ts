@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { MailService } from '../mail/mail.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -8,6 +9,7 @@ export class TransactionsService {
   constructor(
     private prisma: PrismaService,
     private auditLogService: AuditLogService,
+    private mailService: MailService,
   ) {}
 
   async findAll() {
@@ -167,6 +169,18 @@ export class TransactionsService {
       // Log error but don't throw - the deposit already succeeded
       console.error('Error creating audit log:', err);
     }
+
+    // Send transaction confirmation email (fire-and-forget pattern)
+    this.mailService
+      .sendTransactionEmail(
+        account.client.email,
+        `${account.client.firstName} ${account.client.lastName}`,
+        transaction,
+        account.accountNumber,
+      )
+      .catch((err) => {
+        console.error('Error sending transaction email:', err.message);
+      });
 
     return transaction;
   }

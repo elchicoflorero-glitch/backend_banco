@@ -14,6 +14,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { OTPModule } from './otp/otp.module';
 import { PDFReportModule } from './reports/pdf-report.module';
 import { WithdrawalLimitsModule } from './withdrawals/withdrawal-limits.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { WithdrawalLimitsModule } from './withdrawals/withdrawal-limits.module';
     OTPModule,
     PDFReportModule,
     WithdrawalLimitsModule,
+    MailModule,
   ],
 })
 export class AppModule {}
