@@ -6,16 +6,19 @@ RUN apk add --no-cache python3 make g++ libc-dev openssl1.1-compat
 
 WORKDIR /app
 
-# Copy package files
-COPY ./package*.json ./
+# Copy package files from backend
+COPY backend/package*.json ./
 
 # Install dependencies
 RUN npm ci
 
-# Copy source and prisma
-COPY ./prisma ./prisma
-COPY ./src ./src
-COPY ./tsconfig.json ./
+# Copy prisma schema
+COPY backend/prisma ./prisma
+
+# Copy source code
+COPY backend/src ./src
+COPY backend/tsconfig.json ./
+COPY backend/nest-cli.json ./
 
 # Generate Prisma Client
 RUN npm run prisma:generate
@@ -32,17 +35,19 @@ WORKDIR /app
 RUN apk add --no-cache openssl1.1-compat
 
 # Copy package files
-COPY ./package*.json ./
+COPY backend/package*.json ./
 
 # Install only production dependencies
 RUN npm ci --only=production
+
+# Copy prisma schema
+COPY backend/prisma ./prisma
 
 # Generate Prisma Client for runtime
 RUN npm run prisma:generate
 
 # Copy built app from builder
 COPY --from=builder /app/dist ./dist
-COPY ./prisma ./prisma
 
 # Expose port
 EXPOSE 3000
