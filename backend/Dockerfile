@@ -14,20 +14,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY package*.json ./
 COPY prisma ./prisma/
 
+# Clear npm cache before install
+RUN npm cache clean --force
+
 # Install dependencies
-RUN npm ci --production=false
+RUN npm ci
 
 # Copy source code
 COPY . .
+
+# Clear Prisma cache
+RUN rm -rf node_modules/.prisma
 
 # Generate Prisma client
 RUN npx prisma generate
 
 # Build the application
 RUN npm run build
-
-# Remove dev dependencies for production
-RUN npm prune --production
 
 EXPOSE 3000
 
