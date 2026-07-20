@@ -1,6 +1,0 @@
-fronted/
-.git/
-.vscode/
-*.md
-.env.example
-.dockerignore
