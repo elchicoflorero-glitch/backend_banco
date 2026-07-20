@@ -1,8 +1,0 @@
-[build]
-builder = "dockerfile"
-dockerfilePath = "backend/Dockerfile"
-
-[deploy]
-startCommand = "npx prisma db push && npm run start:prod"
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
