@@ -1,54 +1,48 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:18-alpine AS builder
 
-# Install build dependencies for Alpine
-RUN apk add --no-cache \
-    openssl \
-    openssl-dev \
-    libc6-compat \
-    python3 \
-    make \
-    g++
+# Install OpenSSL and build dependencies
+RUN apk add --no-cache openssl openssl-dev python3 make g++ libc-dev
 
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
-COPY prisma ./prisma/
+COPY backend/package*.json ./
 
 # Install dependencies
 RUN npm ci
 
-# Generate Prisma Client with correct binary
-RUN npx prisma generate
+# Copy source
+COPY backend . 
 
-# Copy source code
-COPY . .
+# Generate Prisma Client
+RUN npm run prisma:generate
 
-# Build application
+# Build the app
 RUN npm run build
 
-# Production stage
-FROM node:20-alpine
+# Runtime stage
+FROM node:18-alpine
 
-# Install OpenSSL 3 for Prisma
-RUN apk add --no-cache \
-    openssl \
-    libc6-compat
+# Install OpenSSL runtime libraries
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-# Copy built application from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/prisma ./prisma
+# Copy package files
+COPY backend/package*.json ./
 
-# Set environment variables
-ENV NODE_ENV=production
+# Install only production dependencies
+RUN npm ci --only=production
+
+# Generate Prisma Client for runtime
+RUN npm run prisma:generate
+
+# Copy built app from builder
+COPY --from=builder /app/dist ./dist
 
 # Expose port
 EXPOSE 3000
 
-# Start application
-CMD ["node", "dist/main"]
+# Start the app
+CMD ["node", "dist/main.js"]
