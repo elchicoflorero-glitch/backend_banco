@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only package files (no source code yet)
+# Copy only package files
 COPY package*.json ./
 COPY prisma ./prisma/
 
@@ -18,7 +18,10 @@ RUN npm ci --ignore-scripts
 # Copy source code
 COPY . .
 
-# Build the application (this does NOT generate Prisma)
+# Generate Prisma with explicit binary target
+RUN PRISMA_CLI_QUERY_ENGINE_TYPE=binary npx prisma generate
+
+# Build the application
 RUN npm run build
 
 # Remove dev dependencies
@@ -26,5 +29,5 @@ RUN npm prune --production
 
 EXPOSE 3000
 
-# On startup: clean, generate Prisma, then start
-CMD ["sh", "-c", "rm -rf node_modules/.prisma node_modules/@prisma && npx prisma generate && npx prisma db push --skip-generate && npm run start:prod"]
+# On startup: just start (Prisma already generated)
+CMD ["npm", "run", "start:prod"]
