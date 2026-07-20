@@ -2,7 +2,7 @@ FROM node:18-bookworm-slim
 
 WORKDIR /app
 
-# Install required dependencies (Debian-based, includes OpenSSL by default)
+# Install required dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     ca-certificates \
@@ -10,29 +10,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy package files
+# Copy package files ONLY
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Clear npm cache before install
-RUN npm cache clean --force
-
 # Install dependencies
-RUN npm ci
+RUN npm ci --omit=dev
 
 # Copy source code
 COPY . .
-
-# Clear Prisma cache
-RUN rm -rf node_modules/.prisma
-
-# Generate Prisma client
-RUN npx prisma generate
 
 # Build the application
 RUN npm run build
 
 EXPOSE 3000
 
-# Start the application
-CMD ["sh", "-c", "npx prisma db push && npm run start:prod"]
+# Start the application - Regenerate Prisma at runtime to avoid caching issues
+CMD ["sh", "-c", "rm -rf node_modules/.prisma && npx prisma generate && npx prisma db push && npm run start:prod"]
