@@ -1,0 +1,508 @@
+{
+  "info": {
+    "name": "Banco Perú API",
+    "description": "Colección de endpoints para probar la API de Banco Perú",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Registrar Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user{{$timestamp}}\",\n  \"email\": \"user{{$timestamp}}@example.com\",\n  \"password\": \"Test123456\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3010/api/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"Test123456\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3010/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clientes",
+      "item": [
+        {
+          "name": "Obtener Todos los Clientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3010/api/clients",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "clients"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3010/api/clients/client-1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "clients", "client-1"]
+            }
+          }
+        },
+        {
+          "name": "Crear Cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dni\": \"12345679\",\n  \"firstName\": \"Diego\",\n  \"lastName\": \"López\",\n  \"email\": \"diego@example.com\",\n  \"phone\": \"987654326\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3010/api/clients",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "clients"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Diego Updated\",\n  \"email\": \"diego.updated@example.com\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3010/api/clients/client-1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "clients", "client-1"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3010/api/clients/client-1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "clients", "client-1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cuentas",
+      "item": [
+        {
+          "name": "Obtener Todas las Cuentas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3010/api/accounts",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "accounts"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Cuenta por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3010/api/accounts/account-1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "accounts", "account-1"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Cuenta por Número",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3010/api/accounts/by-number/1000001",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "accounts", "by-number", "1000001"]
+            }
+          }
+        },
+        {
+          "name": "Crear Cuenta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"client-1\",\n  \"currency\": \"PEN\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3010/api/accounts",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "accounts"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Cuenta (Cambiar Moneda)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currency\": \"USD\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3010/api/accounts/account-1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "accounts", "account-1"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Cuenta",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3010/api/accounts/account-1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "accounts", "account-1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transferencias",
+      "item": [
+        {
+          "name": "Realizar Transferencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountNumber\": \"1000001\",\n  \"toAccountNumber\": \"1000002\",\n  \"amount\": 100.00\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3010/api/transfers",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Todas las Transacciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3010/api/transactions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "transactions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auditoría",
+      "item": [
+        {
+          "name": "Obtener Log de Auditoría",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3010/api/audit-logs",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "audit-logs"]
+            }
+          }
+        },
+        {
+          "name": "Crear Entrada en Log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation\": \"ACCOUNT_UPDATE\",\n  \"entityType\": \"ACCOUNT\",\n  \"entityId\": \"account-1\",\n  \"details\": {\n    \"currency\": \"USD\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3010/api/audit-logs",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "audit-logs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Detección de Fraude",
+      "item": [
+        {
+          "name": "Analizar Transferencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100.00,\n  \"sourceAccountNumber\": \"1000001\",\n  \"destinationAccountNumber\": \"1000002\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3010/api/fraud/analyze",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "fraud", "analyze"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notificaciones",
+      "item": [
+        {
+          "name": "Obtener Notificaciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3010/api/notifications",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "Marcar Notificación como Leída",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"read\": true\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3010/api/notifications/{{notificationId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3010",
+              "path": ["api", "notifications", "{{notificationId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

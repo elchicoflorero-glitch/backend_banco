@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: banco-peru-postgres
+    environment:
+      POSTGRES_USER: carlos
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: banco_peru
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carlos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - banco-peru-network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: banco-peru-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - banco-peru-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  banco-peru-network:
+    driver: bridge

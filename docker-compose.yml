@@ -1,0 +1,284 @@
+version: '3.9'
+
+services:
+  # ════════════════════════════════════════
+  # BASE DE DATOS
+  # ════════════════════════════════════════
+  
+  postgres:
+    image: postgres:15-alpine
+    container_name: banco-peru-postgres
+    environment:
+      POSTGRES_USER: carlos
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: banco_peru
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/prisma/complete-setup.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carlos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - banco-peru-network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: banco-peru-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - banco-peru-network
+
+  # ════════════════════════════════════════
+  # MESSAGING
+  # ════════════════════════════════════════
+  
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: banco-peru-kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    networks:
+      - banco-peru-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: banco-peru-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - banco-peru-network
+
+  # ════════════════════════════════════════
+  # ORQUESTACIÓN
+  # ════════════════════════════════════════
+  
+  camunda:
+    image: camunda/camunda-bpmn-platform:latest
+    container_name: banco-peru-camunda
+    ports:
+      - "8080:8080"
+    environment:
+      DB_DRIVER: org.postgresql.Driver
+      DB_URL: jdbc:postgresql://postgres:5432/banco_peru
+      DB_USERNAME: carlos
+      DB_PASSWORD: 1234
+      DB_VALIDATE_ON_BORROW: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - banco-peru-network
+
+  # ════════════════════════════════════════
+  # MICROSERVICIOS
+  # ════════════════════════════════════════
+  
+  svc-util-oauth2:
+    image: bancoperu/svc-util-oauth2:1.0.0
+    container_name: svc-util-oauth2
+    build:
+      context: ./backend
+      dockerfile: ./svc-util-oauth2/Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banco_peru
+      SPRING_DATASOURCE_USERNAME: carlos
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      JWT_EXPIRATION: 1800000
+      JWT_REFRESH_EXPIRATION: 604800000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - banco-peru-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  svc-ent-cuenta:
+    image: bancoperu/svc-ent-cuenta:2.1.0
+    container_name: svc-ent-cuenta
+    build:
+      context: ./backend
+      dockerfile: ./svc-ent-cuenta/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banco_peru
+      SPRING_DATASOURCE_USERNAME: carlos
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://svc-util-oauth2:8090
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      svc-util-oauth2:
+        condition: service_healthy
+    networks:
+      - banco-peru-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  svc-ent-fraude:
+    image: bancoperu/svc-ent-fraude:1.0.0
+    container_name: svc-ent-fraude
+    build:
+      context: ./backend
+      dockerfile: ./svc-ent-fraude/Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banco_peru
+      SPRING_DATASOURCE_USERNAME: carlos
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://svc-util-oauth2:8090
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      svc-util-oauth2:
+        condition: service_healthy
+    networks:
+      - banco-peru-network
+
+  svc-ent-transaccion:
+    image: bancoperu/svc-ent-transaccion:1.0.0
+    container_name: svc-ent-transaccion
+    build:
+      context: ./backend
+      dockerfile: ./svc-ent-transaccion/Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banco_peru
+      SPRING_DATASOURCE_USERNAME: carlos
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://svc-util-oauth2:8090
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      svc-util-oauth2:
+        condition: service_healthy
+    networks:
+      - banco-peru-network
+
+  svc-tarea-transferir-fondos:
+    image: bancoperu/svc-tarea-transferir-fondos:1.0.0
+    container_name: svc-tarea-transferir-fondos
+    build:
+      context: ./backend
+      dockerfile: ./svc-tarea-transferir-fondos/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banco_peru
+      SPRING_DATASOURCE_USERNAME: carlos
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://svc-util-oauth2:8090
+      CAMUNDA_URL: http://camunda:8080/engine-rest
+      SVC_FRAUDE_URL: http://svc-ent-fraude:8085
+      SVC_CUENTA_URL: http://svc-ent-cuenta:8082
+      SVC_TRANSACCION_URL: http://svc-ent-transaccion:8083
+    depends_on:
+      postgres:
+        condition: service_healthy
+      camunda:
+        condition: service_started
+      svc-util-oauth2:
+        condition: service_healthy
+      svc-ent-fraude:
+        condition: service_started
+      svc-ent-cuenta:
+        condition: service_healthy
+      svc-ent-transaccion:
+        condition: service_started
+    networks:
+      - banco-peru-network
+
+  # ════════════════════════════════════════
+  # MONITOREO
+  # ════════════════════════════════════════
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: banco-peru-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - banco-peru-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: banco-peru-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: password
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - banco-peru-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  banco-peru-network:
+    driver: bridge
