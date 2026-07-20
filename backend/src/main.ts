@@ -13,12 +13,11 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   
   // Enable CORS with proper configuration
-  const corsOrigin = process.env.CORS_ORIGIN || '*';
-  const corsOriginArray = corsOrigin.split(',').map(origin => origin.trim());
-  
   app.enableCors({
-    origin: corsOriginArray.length === 1 ? corsOriginArray[0] : corsOriginArray,
-    credentials: process.env.CORS_CREDENTIALS === 'true',
+    origin: ['https://fronted-banco.vercel.app', 'http://localhost:3001'],
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
   
   // Global validation pipe
