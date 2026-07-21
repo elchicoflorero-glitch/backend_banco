@@ -20,11 +20,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </head>
-      <body className={inter.className}>
+      <body className={inter.className} style={{ paddingTop: '70px' }}>
         <Providers>
           <Navbar />
-          <main className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
               {children}
             </div>
           </main>
