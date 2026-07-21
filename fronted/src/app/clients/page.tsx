@@ -117,79 +117,62 @@ export default function ClientsPage() {
 
   if (error && error.includes('No tienes permisos')) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#f9fafb',
-        }}
-      >
-        <div
-          style={{
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '0.5rem',
-            padding: '2rem',
-            textAlign: 'center',
-          }}
-        >
-          <p style={{ color: '#991b1b', fontSize: '1.125rem', fontWeight: 500 }}>
-            ❌ Acceso Denegado
-          </p>
-          <p style={{ color: '#7f1d1d', marginTop: '0.5rem' }}>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
+        <div className="card max-w-md w-full text-center border-l-4 border-red-500">
+          <div className="text-4xl mb-4">🔒</div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Acceso Denegado</h2>
+          <p className="text-gray-600 mb-4">
             No tienes permisos para acceder a esta página. Redirigiendo...
           </p>
+          <div className="w-2 h-2 bg-red-500 rounded-full mx-auto animate-pulse"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#f9fafb',
-        padding: '2rem 1rem',
-      }}
-    >
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '2rem',
-          }}
-        >
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-8">
           <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
-              Gestión de Clientes
-            </h1>
-            <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>
-              Total: {filteredClientCount} clientes
+            <div className="flex items-center gap-3 mb-2">
+              <div className="text-4xl">👥</div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                  Gestión de Clientes
+                </h1>
+                <p className="text-gray-600 text-sm sm:text-base mt-1">
+                  Administra todos tus clientes en un solo lugar
+                </p>
+              </div>
+            </div>
+            <p className="text-sm font-semibold text-gray-500 mt-3 flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-600 rounded-full text-xs">
+                {filteredClientCount}
+              </span>
+              {filteredClientCount} cliente{filteredClientCount !== 1 ? 's' : ''}
             </p>
           </div>
           <button
             onClick={() => setCreateModalOpen(true)}
-            style={{
-              background: '#2563eb',
-              color: 'white',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.375rem',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-            }}
+            className="btn btn-primary flex items-center gap-2 whitespace-nowrap shadow-lg hover:shadow-xl"
           >
-            + Nuevo Cliente
+            <span>➕</span>
+            <span className="hidden sm:inline">Nuevo Cliente</span>
+            <span className="sm:hidden">Nuevo</span>
           </button>
         </div>
 
-        <ErrorAlert message={error} />
-        <ClientSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+        {/* Error Alert */}
+        {error && <ErrorAlert message={error} />}
+
+        {/* Search Section */}
+        <div className="mb-6">
+          <ClientSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+        </div>
+
+        {/* Clients List */}
         <ClientsList
           clients={clients}
           loading={loading}
@@ -200,6 +183,8 @@ export default function ClientsPage() {
           onDelete={handleOpenDelete}
           onError={handleError}
         />
+
+        {/* Back Link */}
         <BackLink />
 
         {/* Modales */}
