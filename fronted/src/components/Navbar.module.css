@@ -269,6 +269,7 @@
   transition: all 0.3s ease;
   cursor: pointer;
   border-left: 3px solid transparent;
+  display: block;
 }
 
 .mobileLink:hover {
